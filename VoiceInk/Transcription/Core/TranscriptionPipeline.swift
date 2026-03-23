@@ -91,6 +91,9 @@ class TranscriptionPipeline {
                 logger.notice("📝 Formatted transcript: \(text, privacy: .public)")
             }
 
+            text = TraditionalChineseConverter.convert(text)
+            logger.notice("📝 TraditionalChineseConverter output: \(text, privacy: .public)")
+
             text = WordReplacementService.shared.applyReplacements(to: text, using: modelContext)
             logger.notice("📝 WordReplacement: \(text, privacy: .public)")
 
