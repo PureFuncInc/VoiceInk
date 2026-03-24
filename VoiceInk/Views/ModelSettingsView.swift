@@ -6,6 +6,8 @@ struct ModelSettingsView: View {
     @AppStorage("IsTextFormattingEnabled") private var isTextFormattingEnabled = true
     @AppStorage("IsVADEnabled") private var isVADEnabled = true
     @AppStorage("AppendTrailingSpace") private var appendTrailingSpace = true
+    @AppStorage("AppendEmojiPrefix") private var appendEmojiPrefix = false
+    @AppStorage("EmojiPrefixValue") private var emojiPrefixValue = "🗣️"
     @AppStorage("PrewarmModelOnWake") private var prewarmModelOnWake = true
     @State private var customPrompt: String = ""
     @State private var isEditing: Bool = false
@@ -52,6 +54,25 @@ struct ModelSettingsView: View {
                     Text("Add Space After Paste")
                 }
                 .toggleStyle(.switch)
+
+                Toggle(isOn: $appendEmojiPrefix) {
+                    HStack(spacing: 4) {
+                        Text("Add Emoji Prefix")
+                        InfoTip("Prepend an emoji before the transcribed text when pasting.")
+                    }
+                }
+                .toggleStyle(.switch)
+
+                if appendEmojiPrefix {
+                    HStack {
+                        Text("Custom Emoji")
+                        InfoTip("Custom Emoji prefix to use when 'Add Emoji Prefix' is enabled. Default is 🗣️.")
+                        Spacer()
+                        TextField("", text: $emojiPrefixValue)
+                            .frame(width: 40)
+                            .multilineTextAlignment(.center)
+                    }
+                }
 
                 Toggle(isOn: $isTextFormattingEnabled) {
                     HStack(spacing: 4) {

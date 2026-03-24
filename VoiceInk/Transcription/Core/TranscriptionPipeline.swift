@@ -187,7 +187,10 @@ class TranscriptionPipeline {
                 }
 
                 let appendSpace = UserDefaults.standard.bool(forKey: "AppendTrailingSpace")
-                CursorPaster.pasteAtCursor(textToPaste + (appendSpace ? " " : ""))
+                let appendEmojiPrefix = UserDefaults.standard.bool(forKey: "AppendEmojiPrefix")
+                let emojiValue = UserDefaults.standard.string(forKey: "EmojiPrefixValue") ?? "🗣️"
+                let prefix = appendEmojiPrefix ? emojiValue + " " : ""
+                CursorPaster.pasteAtCursor(prefix + textToPaste + (appendSpace ? " " : ""))
 
                 let powerMode = PowerModeManager.shared
                 if let activeConfig = powerMode.currentActiveConfiguration, activeConfig.autoSendKey.isEnabled {

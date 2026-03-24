@@ -25,6 +25,8 @@ enum AppDefaults {
             "RemoveFillerWords": true,
             "SelectedLanguage": "en",
             "AppendTrailingSpace": true,
+            "AppendEmojiPrefix": true,
+            "EmojiPrefixValue": "🗣️",
             "RecorderType": "mini",
 
             // Cleanup
