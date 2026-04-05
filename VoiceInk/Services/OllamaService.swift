@@ -76,15 +76,15 @@ class OllamaService: ObservableObject {
         }
 
         do {
-            return try await OllamaClient.generate(
+            return try await CustomOllamaClient.generate(
                 baseURL: url,
                 model: selectedModel,
                 prompt: text,
                 systemPrompt: systemPrompt,
                 temperature: defaultTemperature
             )
-        } catch let error as LLMKitError {
-            throw mapLLMKitError(error)
+        } catch let error as LocalAIError {
+            throw error
         }
     }
 
@@ -104,6 +104,62 @@ class OllamaService: ObservableObject {
             return .invalidRequest
         case .missingAPIKey, .timeout:
             return .invalidResponse
+        }
+    }
+}
+
+// MARK: - Custom Ollama Client
+/// Extends OllamaClient's generate API with additional parameters (e.g. `think: false`)
+/// that the LLMkit OllamaClient does not support.
+private struct CustomOllamaClient {
+
+    private struct GenerateResponse: Decodable {
+        let response: String
+    }
+
+    static func generate(
+        baseURL: URL,
+        model: String,
+        prompt: String,
+        systemPrompt: String,
+        temperature: Double = 0.3,
+        timeout: TimeInterval = 30
+    ) async throws -> String {
+        let url = baseURL.appendingPathComponent("api/generate")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = timeout
+
+        let body: [String: Any] = [
+            "model": model,
+            "prompt": prompt,
+            "system": systemPrompt,
+            "temperature": temperature,
+            "stream": false,
+            "think": false
+        ]
+
+        guard let bodyData = try? JSONSerialization.data(withJSONObject: body) else {
+            throw LocalAIError.invalidRequest
+        }
+        request.httpBody = bodyData
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                throw LocalAIError.invalidResponse
+            }
+            guard (200..<300).contains(http.statusCode) else {
+                if http.statusCode == 404 { throw LocalAIError.modelNotFound }
+                if http.statusCode == 500 { throw LocalAIError.serverError }
+                throw LocalAIError.invalidResponse
+            }
+            return try JSONDecoder().decode(GenerateResponse.self, from: data).response
+        } catch let error as LocalAIError {
+            throw error
+        } catch {
+            throw LocalAIError.serviceUnavailable
         }
     }
 }
